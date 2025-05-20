@@ -1,0 +1,29 @@
+c -------------------
+c ------ Bella ------
+c -------------------
+c d-DNNF
+c
+nnf 19 16 6
+c literal leaf: 12
+c constant leaf: 2
+c AND inner node: 4
+c binary OR inner node: 1
+O 0 0
+A 0
+L 1
+L -1
+L 2
+L -2
+L 3
+L -3
+L 4
+L -4
+L 5
+L -5
+L 6
+L -6
+A 5 3 4 7 11 12
+A 5 2 5 6 10 13
+A 2 14 8
+A 2 15 9
+O 4 2 16 17

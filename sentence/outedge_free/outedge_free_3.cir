@@ -1,0 +1,28 @@
+c -------------------
+c ------ Bella ------
+c -------------------
+c wDNNF
+c
+nnf 18 9 6
+c literal leaf: 12
+c constant leaf: 2
+c AND inner node: 1
+c OR inner node: 3
+O 0 0
+A 0
+L 1
+L -1
+L 2
+L -2
+L 3
+L -3
+L 4
+L -4
+L 5
+L -5
+L 6
+L -6
+O 0 2 2 4
+O 0 2 10 12
+O 0 2 6 8
+B 3 14 15 16

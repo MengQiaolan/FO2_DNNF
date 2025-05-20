@@ -1,0 +1,4 @@
+\forall X: (~E(X,X) & ~F(X,X)) &
+\forall X: (\forall Y: (F(X,Y) -> ~F(Y,X))) &
+\forall X: (\exists Y: (E(X,Y)))
+V = 10
