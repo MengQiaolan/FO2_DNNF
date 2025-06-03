@@ -77,19 +77,12 @@ class Context(object):
         self.rels_of_cells: dict[tuple[Cell, Cell], list[Relation]] = {}
         self.two_tables, self.rels_of_cells = build_two_tables(self.uni_formula, self.cells)
         
-        self.atom_to_sym: dict[AtomicFormula, sympy.Symbol] = {}
-        self.sym_to_atom: dict[sympy.Symbol, AtomicFormula] = {}
         self.relations: list[Relation] = []
         for two_table in self.two_tables:
             relation: set[AtomicFormula] = set()
             for lit in two_table:
                 if lit.args[0] != lit.args[1]:
                     relation.add(lit)
-                    atom = lit if lit.positive else ~lit
-                    if atom not in self.atom_to_sym and not atom.pred.name.startswith(EXT_PRED_PREFIX):
-                        symbol = sympy.Symbol(atom.__str__())
-                        self.atom_to_sym[atom] = symbol
-                        self.sym_to_atom[symbol] = atom
             self.relations.append(frozenset(relation))
         
         # init the blocks of each cell
