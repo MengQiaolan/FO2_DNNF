@@ -20,16 +20,15 @@ python compiler.py -i INPUT -n DOMAIN_SIZE
 
 ```bash
 # example
-python fo2cnf.py -i sentence/nonisolated/nonisolated.wfomcs -n 3
+python fo2cnf.py -i sentence/nonisolated/nonisolated.wfomcs -s -n 3
 ```
 
 ```bash
-python fo2cnf.py -i INPUT -n DOMAIN_SIZE [--build] [--show] [--debug]
+python fo2cnf.py -i INPUT [--show] -n DOMAIN_SIZE
 
 # options:
 #  -i INPUT              sentence file
 #  -n DOMAIN_SIZE        domain size
-#  --build               build the circuit (default: True)
-#  --show                show the circuit (default: True)
+#  -show -s              show the circuit
 ```
 

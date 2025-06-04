@@ -12,6 +12,7 @@ from wfomc.fol.utils import new_predicate
 from compilation_utils import *
 
 from circuit import NodeType, NC
+from sat_context import SatContext
 
 @functools.lru_cache(maxsize=None)
 def group_relations_by_blocks(rels: frozenset[Relation], block_status: tuple[tuple, tuple]) \
@@ -56,6 +57,9 @@ def group_relations_by_blocks(rels: frozenset[Relation], block_status: tuple[tup
 class Context(object):
     
     def __init__(self, problem: WFOMCProblem):
+        
+        self.sat_context: SatContext = SatContext(problem)
+        
         self.sentence: SC2 = problem.sentence
         self.weights: dict[Pred, tuple] = problem.weights
         self.domain_size = len(problem.domain)
@@ -73,23 +77,16 @@ class Context(object):
         self.cell_graph: CellGraph = CellGraph(self.uni_formula, self.get_weight)
         self.cells: list[Cell] = self.cell_graph.cells
         
-        # 2-tables contaion the cells, but the relations are not included
+        # build 2-tables
         self.rels_of_cells: dict[tuple[Cell, Cell], list[Relation]] = {}
         self.two_tables, self.rels_of_cells = build_two_tables(self.uni_formula, self.cells)
         
-        self.atom_to_sym: dict[AtomicFormula, sympy.Symbol] = {}
-        self.sym_to_atom: dict[sympy.Symbol, AtomicFormula] = {}
         self.relations: list[Relation] = []
         for two_table in self.two_tables:
             relation: set[AtomicFormula] = set()
             for lit in two_table:
-                if lit.args[0] != lit.args[1]:
+                if len(lit.args) == 2 and lit.args[0] != lit.args[1]:
                     relation.add(lit)
-                    atom = lit if lit.positive else ~lit
-                    if atom not in self.atom_to_sym and not atom.pred.name.startswith(EXT_PRED_PREFIX):
-                        symbol = sympy.Symbol(atom.__str__())
-                        self.atom_to_sym[atom] = symbol
-                        self.sym_to_atom[symbol] = atom
             self.relations.append(frozenset(relation))
         
         # init the blocks of each cell
@@ -103,17 +100,40 @@ class Context(object):
         
         # init the leaf nodes
         self.literal_to_node_index: dict[str, int] = {}
-        for (e_1, e_2) in combinations(self.domain, 2):
-            tuples = [(e_1, e_2), (e_2, e_1)]
+        for e in self.domain:
             for pred in self.cells[0].preds:
                 if pred.name.startswith(EXT_PRED_PREFIX):
                     continue
-                for a, b in tuples:
+                if pred.arity == 1:
                     for sign in ("", "~"):
-                        lit_str = f'{sign}{pred.name}({a.name},{b.name})'
+                        lit_str = f'{sign}{pred.name}({e.name})'
                         leaf_node = NC.create_node(NodeType.LEAF, lit_str)
                         self.literal_to_node_index[lit_str] = leaf_node.index
-            
+                elif pred.arity == 2:
+                    for e_2 in self.domain:
+                        for sign in ("", "~"):
+                            lit_str = f'{sign}{pred.name}({e.name},{e_2.name})'
+                            leaf_node = NC.create_node(NodeType.LEAF, lit_str)
+                            self.literal_to_node_index[lit_str] = leaf_node.index
+        
+        # construct the subcircuit for cells
+        self.cell_subcircuit: dict[Cell, dict[Const, int]] = {}
+        for cell in self.cells:
+            self.cell_subcircuit[cell] = {}
+            for e in self.domain:
+                and_node = NC.create_node(NodeType.AND)
+                for pred in cell.preds:
+                    sign = "" if cell.is_positive(pred) else "~"
+                    if pred.name.startswith(EXT_PRED_PREFIX):
+                        continue
+                    if pred.arity == 1:
+                        lit_str = f'{sign}{pred.name}({e.name})'
+                        and_node.children.add(self.literal_to_node_index[lit_str])
+                    elif pred.arity == 2:
+                        lit_str = f'{sign}{pred.name}({e.name},{e.name})'
+                        and_node.children.add(self.literal_to_node_index[lit_str])
+                self.cell_subcircuit[cell][e] = and_node.index
+        
         # init the simplified formulas for relations of free pairs
         self.tpl_freepair_formula: dict[tuple[Cell, Cell], QFFormula] = {}
         for cell_pair in product(self.cells, repeat=2):
@@ -121,7 +141,11 @@ class Context(object):
             self.tpl_freepair_formula[cell_pair] = rels_conjunction(rels)
             
     
-    # neccessary parameter for CellGraph function     
+    def sat(self, evi: set[AtomicFormula]) -> bool:
+        sympy_evi = set(atom.expr for atom in evi)
+        return self.sat_context.sat(sympy_evi)
+    
+    # neccessary parameter for CellGraph function
     def get_weight(self, pred: Pred) -> tuple:
         return (1, 1)
     

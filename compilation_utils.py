@@ -179,3 +179,20 @@ def ground_on_tuple(formula: QFFormula, c1: Const, c2: Const = None) -> QFFormul
 #     for evi in evidences:
 #         conditioned_dnf = conditional_on_lit(evi, dnf, rm_evi)
 #     return conditioned_dnf
+
+
+def greedy_prize_cover(t: frozenset, S: set[frozenset]):
+    S = [s for s in S if s.issubset(t)]  # only consider sets that are subsets of t
+    U = set(t) # uncovered elements
+    P = [] # selected sets
+
+    while U:
+        # find the set in S that covers the most elements in U
+        best = max(S, key=lambda X: len(X & U), default=None)
+        cov = best & U if best else set()
+        if not cov:
+            break
+        P.append(best)
+        U -= best
+
+    return P, U

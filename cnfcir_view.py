@@ -86,8 +86,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parse circuit into a NetworkX DiGraph')
     parser.add_argument('--input', '-i',help='Path to the file')
     args = parser.parse_args()
+    file_prefix = args.input
 
-    G = parse_circuit_to_networkx(f'{args.input}.cir')
+    G = parse_circuit_to_networkx(f'{file_prefix}.cnf.cir')
     print(f"Graph loaded: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
     
     # Remove isolated nodes
@@ -96,7 +97,7 @@ if __name__ == '__main__':
         G.remove_nodes_from(isolates)
         print(f"Removed {len(isolates)} isolated nodes: {isolates}")
     
-    apply_label_mapping(G, f'{args.input}.cnf')
+    apply_label_mapping(G, f'{file_prefix}.cnf')
     
     # Position nodes with Graphviz dot layout (requires pygraphviz or pydot)
     plt.figure(figsize=(12, 8))

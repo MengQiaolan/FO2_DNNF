@@ -174,10 +174,10 @@ class NodeContext:
             if node.type == NodeType.LEAF:
                 G.add_node(str(node.index), label=node.literal_str)
             elif node.type == NodeType.AND:
-                G.add_node(str(node.index), label=f'⋀({node.mark})' if node.mark is not None else '⋀')
+                G.add_node(str(node.index), label=f'⋀_{node.mark}' if node.mark is not None else '⋀')
                 # G.add_node(str(node.index), label=f'⋀({node.index})')
             elif node.type == NodeType.OR:
-                G.add_node(str(node.index), label=f'⋁({node.mark})' if node.mark is not None else '⋁')
+                G.add_node(str(node.index), label=f'⋁_{node.mark}' if node.mark is not None else '⋁')
                 # G.add_node(str(node.index), label=f'⋁({node.index})')
             else:
                 raise RuntimeError('The node type is not correct')
@@ -203,7 +203,6 @@ class NodeContext:
         plt.show()
         dot_filename = "dnnf.dot"
         nx.nx_agraph.write_dot(G, dot_filename)
-
 
 NC = NodeContext()
     

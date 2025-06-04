@@ -1,0 +1,6 @@
+\forall X: ((~R(X) | ~B(X)) & ((R(X) | B(X))))  &
+\forall X: (\forall Y: (E(X,Y) -> E(Y,X))) &
+\forall X: (\forall Y: (E(X,Y) -> ((R(X) & B(Y)) | (B(X) & R(Y))))) &
+\forall X: (\exists Y: (E(X,Y)))
+
+V = 10
