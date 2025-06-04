@@ -99,7 +99,7 @@ def pair_recursion(ctx: Context,
     
     if len(domain_todo) == 0:
         logger.info(f'{"    " * rec_state.depth} No more elements in domain, return')
-        domain_recursion(ctx, domain_done, DomainToCell,
+        domain_recursion_rel(ctx, domain_done, DomainToCell,
                          subroot_node, FreePairsRecord, StateCache, rec_state)
         return
     
@@ -151,7 +151,7 @@ def pair_recursion(ctx: Context,
         if subcircuit_index is not None:
             add_subcircuit(rec_state_copy, subcircuit_index)
 
-def domain_recursion(ctx: Context, domain: list[Const], DomainToCell: dict[Const, Cell],
+def domain_recursion_rel(ctx: Context, domain: list[Const], DomainToCell: dict[Const, Cell],
                      subroot_node: Node, FreePairsRecord: dict[frozenset[frozenset[Const]], list[Node]], 
                      StateCache: dict[RecursionState, int], rec_state: RecursionState):
     target_element = domain[0]
@@ -167,6 +167,20 @@ def domain_recursion(ctx: Context, domain: list[Const], DomainToCell: dict[Const
                     StateCache=StateCache,
                     rec_state=rec_state)
 
+def domain_recursion_cell(ctx: Context, domain: list[Const], root_node: Node):
+    if len(domain) == 0:
+        return
+    target_element = domain[0]
+    domain = domain[1:]
+    for cell in ctx.cells:
+        and_node = NC.create_node(NodeType.AND)
+        or_node = NC.create_node(NodeType.OR)
+        root_node.children.add(and_node.index)
+        and_node.children.add(ctx.cell_subcircuit[cell][target_element])
+        and_node.children.add(or_node.index)
+        domain_recursion_cell(ctx, domain, or_node)
+        
+
 if __name__ == "__main__":
     # import sys
     # sys.setrecursionlimit(int(1e6))
@@ -178,6 +192,12 @@ if __name__ == "__main__":
 
     problem = get_problem(args)
     ctx = Context(problem)
+    
+    root_node = NC.ROOT
+    domain_recursion_cell(ctx, copy.deepcopy(ctx.domain), root_node)
+    
+    NC.show_circuit()
+    exit(0)
     
     # assign cell to each element in the domain
     DomainToCell: dict[Const, Cell] = {}
@@ -202,7 +222,7 @@ if __name__ == "__main__":
     FreePairsRecord: dict[frozenset[frozenset[Const]], list[Node]] = {}
     StateCache: dict[RecursionState, int] = {}
     
-    domain_recursion(ctx, copy.deepcopy(ctx.domain), DomainToCell, 
+    domain_recursion_rel(ctx, copy.deepcopy(ctx.domain), DomainToCell, 
                      root_node, FreePairsRecord, StateCache, rec_state)
     
     build_subcircuit_for_freepairs(ctx, DomainToCell, FreePairsRecord)
